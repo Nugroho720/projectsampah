@@ -15,25 +15,25 @@ import os
 # --- 1. KONFIGURASI HALAMAN ---
 st.set_page_config(
     page_title="EcoSort Edu",
-    page_icon="♻️",
+    page_icon="🌍",
     layout="wide",
 )
 
-# --- 2. CSS PLATINUM (TOSCA GRADIENT + BERSIH) ---
+# --- 2. CSS & TEMA "MINT FRESH" ---
 st.markdown("""
 <style>
-    /* BACKGROUND GRADASI TOSCA */
+    /* BACKGROUND GRADASI HIJAU TOSCA */
     .stApp {
         background: linear-gradient(180deg, #A7FFEB 0%, #E0F7FA 100%);
         background-attachment: fixed;
     }
     
-    /* MENYEMBUNYIKAN HEADER BAWAAN STREAMLIT BIAR BERSIH */
+    /* HIDE HEADER BAWAAN */
     header {visibility: hidden;}
     
-    /* MEMAKSA TEKS JADI HITAM JELAS (ANTI DARK MODE) */
+    /* TEKS HITAM JELAS (ANTI DARK MODE) */
     .stMarkdown, .stText, h1, h2, h3, h4, h5, h6, p, div, span, label, li {
-        color: #004D40 !important; /* Hijau Tua Gelap */
+        color: #004D40 !important;
         font-family: 'Segoe UI', sans-serif;
     }
     
@@ -45,88 +45,76 @@ st.markdown("""
     
     /* TOMBOL UPDATE */
     .stButton>button {
-        background: linear-gradient(45deg, #009688, #4DB6AC);
+        background: linear-gradient(45deg, #00BFA5, #1DE9B6);
         color: white !important;
-        border-radius: 10px;
+        border-radius: 12px;
         border: none;
         font-weight: bold;
         transition: 0.3s;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     .stButton>button:hover {
-        transform: scale(1.02);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.2);
     }
 
-    /* KARTU INFO HASIL */
-    .success-box {
-        padding: 20px;
-        background-color: #E0F2F1;
-        border-left: 6px solid #009688;
-        border-radius: 10px;
-        box-shadow: 2px 2px 10px rgba(0,0,0,0.05);
-    }
-    .warning-box {
-        padding: 20px;
-        background-color: #FFF3E0;
-        border-left: 6px solid #FF9800;
-        border-radius: 10px;
-        box-shadow: 2px 2px 10px rgba(0,0,0,0.05);
+    /* KOTAK INFO EDUKASI (REVISI: LEBIH MENARIK) */
+    .info-card {
+        padding: 25px;
+        border-radius: 15px;
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        border: 1px solid white;
     }
     
-    /* MENGHILANGKAN KOTAK PUTIH KOSONG YANG MENGGANGGU */
+    /* WARNA KHUSUS */
+    .text-organik { color: #2E7D32 !important; }
+    .text-anorganik { color: #E65100 !important; }
+    
+    /* MENGHILANGKAN KOTAK KOSONG */
     .css-card { display: none; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. DATA & MODEL ---
+# --- 3. DATABASE EDUKASI (REVISI: LEBIH LENGKAP & PERSUASIF) ---
 info_sampah = {
     "ORGANIK": {
-        "judul": "🌱 ORGANIK",
-        "sifat": "Mudah Terurai (Biodegradable)",
-        "desc": "Berasal dari alam (sisa makhluk hidup). Bisa jadi kompos.",
-        "aksi": "Olah jadi **Pupuk Kompos** atau **Pakan Ternak**."
+        "judul": "🌱 SAMPAH ORGANIK",
+        "sifat": "✅ Mudah Terurai (Biodegradable)",
+        "desc": "Sampah ini berasal dari alam. Jika dibiarkan di tanah, ia akan membusuk dan menyatu dengan bumi.",
+        "bahaya": "⚠️ **Hati-hati:** Jika sampah ini ditumpuk di dalam plastik tertutup (TPA), ia akan menghasilkan **Gas Metana** yang menyebabkan Pemanasan Global (Global Warming)!",
+        "manfaat": "✨ **Solusi Emas:** Jangan buang percuma! Olah menjadi **Pupuk Kompos** untuk menyuburkan tanaman ibumu, atau jadikan **Eco-Enzyme** pembersih alami.",
+        "aksi": "Masukkan ke lubang biopori atau komposter rumah."
     },
     "ANORGANIK": {
-        "judul": "⚙️ ANORGANIK",
-        "sifat": "Sulit Terurai (Non-Biodegradable)",
-        "desc": "Bahan sintesis/pabrikan. Tahan ratusan tahun.",
-        "aksi": "Wajib **Daur Ulang (Recycle)** di Bank Sampah."
+        "judul": "⚙️ SAMPAH ANORGANIK",
+        "sifat": "❌ Sulit Terurai (Bisa Ratusan Tahun)",
+        "desc": "Sampah buatan manusia/pabrik. Bakteri pengurai tidak doyan sampah ini.",
+        "bahaya": "⚠️ **Bahaya Fatal:** Jika dibuang ke sungai, ia menyumbat dan bikin banjir. Jika dibuang ke laut, ia dimakan ikan dan menjadi **Mikroplastik** yang akhirnya kita makan juga!",
+        "manfaat": "✨ **Solusi Cerdas:** Sampah ini adalah **Uang**! Kumpulkan, bersihkan, dan jual ke **Bank Sampah**. Atau kreasikan menjadi kerajinan tangan yang cantik.",
+        "aksi": "Pisahkan dari sampah basah. Setorkan ke pemulung atau Bank Sampah."
     }
 }
 
-# Bank Soal Kuis (Lebih Banyak & Edukatif)
-kuis_db = [
-    {
-        "tanya": "1. Kulit pisang yang dibuang ke tanah akan terurai dalam waktu...",
-        "opsi": ["A. 100 Tahun", "B. 2-5 Minggu", "C. Tidak bisa terurai"],
-        "kunci": "B. 2-5 Minggu",
-        "info": "Benar! Sampah organik seperti kulit buah sangat cepat terurai oleh bakteri tanah."
-    },
-    {
-        "tanya": "2. Manakah di bawah ini yang termasuk sampah B3 (Bahan Berbahaya Beracun)?",
-        "opsi": ["A. Baterai Bekas", "B. Botol Plastik", "C. Kertas Koran"],
-        "kunci": "A. Baterai Bekas",
-        "info": "Tepat! Baterai mengandung zat kimia berbahaya dan tidak boleh dibuang sembarangan."
-    },
-    {
-        "tanya": "3. Botol plastik air mineral sebaiknya diperlakukan bagaimana?",
-        "opsi": ["A. Dibakar", "B. Dibuang ke sungai", "C. Didaur Ulang (Recycle)"],
-        "kunci": "C. Didaur Ulang (Recycle)",
-        "info": "Betul. Membakar plastik berbahaya bagi pernapasan, mendaur ulang adalah solusi terbaik."
-    },
-    {
-        "tanya": "4. Apa warna tempat sampah yang umum digunakan untuk sampah Organik?",
-        "opsi": ["A. Hijau", "B. Kuning", "C. Merah"],
-        "kunci": "A. Hijau",
-        "info": "Benar. Hijau untuk Organik, Kuning untuk Anorganik, Merah untuk B3."
-    },
-    {
-        "tanya": "5. Styrofoam membutuhkan waktu berapa lama untuk hancur alami?",
-        "opsi": ["A. 1 Tahun", "B. 50 Tahun", "C. Tidak dapat terurai / >500 tahun"],
-        "kunci": "C. Tidak dapat terurai / >500 tahun",
-        "info": "Benar sekali. Styrofoam adalah musuh lingkungan karena hampir abadi!"
-    }
-]
+# --- DATABASE KUIS PER LEVEL (REVISI: LEBIH BANYAK) ---
+kuis_data = {
+    "Level 1: Pemula (Basic)": [
+        {"t": "Kulit jeruk termasuk jenis sampah apa?", "o": ["Organik", "Anorganik", "Residu"], "k": "Organik", "msg": "Betul! Kulit buah berasal dari alam."},
+        {"t": "Warna tempat sampah untuk organik biasanya...", "o": ["Merah", "Hijau", "Biru"], "k": "Hijau", "msg": "Tepat! Hijau melambangkan daun/alam."},
+        {"t": "Botol plastik bekas minum sebaiknya...", "o": ["Dibuang ke sungai", "Dibakar", "Didaur Ulang"], "k": "Didaur Ulang", "msg": "Benar. Daur ulang menyelamatkan bumi!"}
+    ],
+    "Level 2: Pengetahuan (Intermediate)": [
+        {"t": "Berapa lama styrofoam hancur secara alami?", "o": ["10 Tahun", "100 Tahun", "Tidak bisa terurai"], "k": "Tidak bisa terurai", "msg": "Ya! Styrofoam adalah musuh abadi lingkungan."},
+        {"t": "Gas berbahaya yang dihasilkan sampah organik di TPA adalah...", "o": ["Oksigen", "Metana", "Nitrogen"], "k": "Metana", "msg": "Tepat. Metana memperparah efek rumah kaca."},
+        {"t": "Apa itu 3R dalam pengelolaan sampah?", "o": ["Run, Rush, Race", "Reduce, Reuse, Recycle", "Read, Rest, Relax"], "k": "Reduce, Reuse, Recycle", "msg": "Benar! Kurangi, Gunakan Ulang, Daur Ulang."}
+    ],
+    "Level 3: Ahli Lingkungan (Expert)": [
+        {"t": "Sampah B3 (Bahan Berbahaya Beracun) contohnya adalah...", "o": ["Daun Kering", "Baterai Bekas", "Kertas"], "k": "Baterai Bekas", "msg": "Akurat. Baterai mengandung logam berat berbahaya."},
+        {"t": "Apa itu 'Eco-Brick'?", "o": ["Bata dari tanah liat", "Botol plastik berisi padatan sampah plastik", "Tanaman hias"], "k": "Botol plastik berisi padatan sampah plastik", "msg": "Keren! Eco-brick solusi mengurangi limbah plastik."},
+        {"t": "Mikroplastik adalah...", "o": ["Plastik ukuran besar", "Plastik baru", "Partikel plastik sangat kecil (<5mm)"], "k": "Partikel plastik sangat kecil (<5mm)", "msg": "Benar. Ini sangat berbahaya bagi kesehatan laut dan manusia."}
+    ]
+}
 
 @st.cache_resource
 def load_model():
@@ -141,12 +129,14 @@ def load_lottieurl(url):
     except: return None
 
 model = load_model()
-lottie_quiz = load_lottieurl("https://assets8.lottiefiles.com/packages/lf20_zrqthn6o.json")
-lottie_main = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_tutvdkg0.json")
+# Animasi Sukses Baru (Bunga/Alam)
+lottie_success = load_lottieurl("https://assets10.lottiefiles.com/packages/lf20_u4yrau.json") 
+lottie_quiz_anim = load_lottieurl("https://assets8.lottiefiles.com/packages/lf20_zrqthn6o.json")
+lottie_sidebar = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_tutvdkg0.json")
 
 if 'history_data' not in st.session_state: st.session_state['history_data'] = []
 
-# --- 4. VIDEO PROCESSOR (MIRRORING FIX) ---
+# --- 4. VIDEO PROCESSOR ---
 class VideoProcessor:
     def __init__(self):
         self.mirror = False 
@@ -192,29 +182,31 @@ def prediksi_gambar_diam(image):
 
 # ================= MAIN UI =================
 
-# SIDEBAR
+# SIDEBAR (REVISI SLOGAN)
 with st.sidebar:
-    if lottie_main: st_lottie(lottie_main, height=150, key="anim")
+    if lottie_sidebar: st_lottie(lottie_sidebar, height=150, key="anim")
     st.markdown("## EcoSort Edu 🌿")
-    st.markdown("**Versi Pelajar Pro**")
+    # REVISI: Slogan Inspiratif
+    st.markdown("*'Satu langkah kecil memilah, lompatan besar untuk bumi.'*")
     st.divider()
-    st.info("💡 **Info:** Aplikasi ini membantu mengidentifikasi jenis sampah untuk pemilahan yang lebih baik.")
+    st.info("💡 **Did You Know?**\nSatu liter minyak jelantah bisa mencemari 1000 liter air tanah!")
     st.caption("© 2025 Project UAS")
 
 if model is None:
     st.error("⚠️ Model belum ditemukan di GitHub.")
     st.stop()
 
-# HEADER
+# HEADER (REVISI LOGO BUMI)
 c1, c2 = st.columns([0.5, 4])
 with c1:
-    st.image("https://cdn-icons-png.flaticon.com/512/3299/3299956.png", width=80)
+    # REVISI: Ikon Bumi
+    st.image("https://cdn-icons-png.flaticon.com/512/2947/2947656.png", width=85)
 with c2:
     st.title("EcoSort Edu")
-    st.markdown("### Klasifikasi & Edukasi Sampah")
+    st.markdown("#### Klasifikasi & Edukasi Sampah")
 
 # TABS NAVIGATION
-tab1, tab2, tab3, tab4 = st.tabs(["📸 SCANNER", "📊 DATA STATISTIK", "🎓 KUIS EDUKASI", "ℹ️ INFO PROJECT"])
+tab1, tab2, tab3, tab4 = st.tabs(["📸 AI SCANNER", "📊 STATISTIK", "🎓 KUIS BERLEVEL", "ℹ️ INFO PROJECT"])
 
 # === TAB 1: SCANNER ===
 with tab1:
@@ -230,7 +222,6 @@ with tab1:
             if up:
                 img = Image.open(up)
                 st.image(img, caption="Preview Gambar", use_container_width=True)
-                # Simpan di session state
                 st.session_state['last_img'] = img
                 st.session_state['last_mode'] = 'upload'
 
@@ -242,9 +233,7 @@ with tab1:
                 st.session_state['last_mode'] = 'camera'
 
         elif mode == "📹 Live Video":
-            # FITUR MIRRORING
             mirror_mode = st.checkbox("🔄 Balik Kamera (Mirror)", value=True)
-            
             ctx = webrtc_streamer(
                 key="live", 
                 mode=WebRtcMode.SENDRECV,
@@ -256,28 +245,26 @@ with tab1:
             if ctx.video_processor:
                 ctx.video_processor.mirror = mirror_mode
 
-    # PANEL HASIL (KANAN)
+    # PANEL HASIL (REVISI: TEKS LEBIH BANYAK)
     with col_kanan:
-        st.markdown("#### 2. Hasil Analisis")
+        st.markdown("#### 2. Hasil Analisis AI")
         
-        # Logika Menampilkan Hasil
         if mode != "📹 Live Video":
             if 'last_img' in st.session_state and st.session_state.get('last_mode') in ['upload', 'camera']:
-                # Proses Gambar
                 img = st.session_state['last_img']
                 lbl, conf = prediksi_gambar_diam(img)
-                
-                # Tampilan Kotak Keren
                 info = info_sampah[lbl]
-                css_box = "success-box" if lbl == "ORGANIK" else "warning-box"
                 
+                # Tampilan Kartu Hasil "Deep"
                 st.markdown(f"""
-                <div class="{css_box}">
-                    <h2 style="margin-top:0; color:#004D40;">{info['judul']}</h2>
+                <div class="info-card">
+                    <h2 style="margin-top:0; color:{'#2E7D32' if lbl=='ORGANIK' else '#E65100'}">{info['judul']}</h2>
                     <p style="font-size:1.1em;"><b>{info['sifat']}</b></p>
-                    <p>{info['desc']}</p>
                     <hr>
-                    <p>💡 <b>Saran:</b> {info['aksi']}</p>
+                    <p>{info['desc']}</p>
+                    <p>{info['bahaya']}</p>
+                    <br>
+                    <p>{info['manfaat']}</p>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -311,43 +298,52 @@ with tab2:
     else:
         st.warning("Belum ada data tersimpan. Yuk scan sampah dulu!")
 
-# === TAB 3: KUIS EDUKASI (FITUR BARU & LEBIH BANYAK) ===
+# === TAB 3: KUIS PER LEVEL (REVISI) ===
 with tab3:
-    col_q, col_anim = st.columns([2, 1])
-    with col_q:
-        st.markdown("### 🧠 Tantangan Pengetahuan Lingkungan")
-        st.write("Jawab pertanyaan berikut untuk menguji wawasanmu!")
-    with col_anim:
-        if lottie_quiz: st_lottie(lottie_quiz, height=150)
+    col_hdr, col_anm = st.columns([3, 1])
+    with col_hdr:
+        st.subheader("🎓 Tantangan Pemilahan Sampah")
+        st.write("Pilih level kesulitanmu dan buktikan kamu peduli lingkungan!")
+    with col_anm:
+        if lottie_quiz_anim: st_lottie(lottie_quiz_anim, height=120)
     
     st.divider()
+
+    # Pilih Level
+    pilihan_level = st.selectbox("Pilih Tingkat Kesulitan:", list(kuis_data.keys()))
+    
+    # Ambil soal berdasarkan level
+    soal_aktif = kuis_data[pilihan_level]
     
     score = 0
-    # Loop pertanyaan
-    for i, q in enumerate(kuis_db):
-        st.markdown(f"**{q['tanya']}**")
-        jawaban = st.radio(f"Pilih jawaban nomor {i+1}:", q['opsi'], key=f"q{i}", index=None)
+    total_soal = len(soal_aktif)
+    point_per_soal = 100 / total_soal
+    
+    for i, q in enumerate(soal_aktif):
+        st.markdown(f"**Soal {i+1}:** {q['t']}")
+        jawaban = st.radio(f"Jawaban No {i+1}:", q['o'], key=f"{pilihan_level}_{i}", index=None)
         
         if jawaban:
-            if jawaban == q['kunci']:
-                st.success(f"✅ Benar! {q['info']}")
-                score += 20 # 5 Soal x 20 = 100
+            if jawaban == q['k']:
+                st.success(f"✅ {q['msg']}")
+                score += point_per_soal
             else:
-                st.error("❌ Kurang tepat.")
+                st.error("❌ Masih kurang tepat, coba lagi ya.")
         st.write("---")
-    
-    # Hasil Akhir
-    if st.button("Hitung Skor Saya"):
+        
+    if st.button("Lihat Nilai Saya"):
         if score == 100:
+            # REVISI: Animasi Alam/Bunga
+            if lottie_success: st_lottie(lottie_success, height=200, key="success")
             st.balloons()
-            st.markdown(f"### 🎉 LUAR BIASA! Skor Kamu: {score}/100")
-            st.info("Kamu adalah pahlawan lingkungan sejati!")
+            st.markdown(f"### 🎉 SEMPURNA! Nilai: 100")
+            st.success("Hebat! Kamu sudah siap jadi Duta Lingkungan.")
         elif score >= 60:
-            st.markdown(f"### 👏 BAGUS! Skor Kamu: {score}/100")
-            st.write("Tingkatkan lagi wawasanmu ya.")
+            st.markdown(f"### 👍 Bagus! Nilai: {int(score)}")
+            st.info("Sedikit lagi sempurna. Ayo belajar lagi.")
         else:
-            st.markdown(f"### Skor Kamu: {score}/100")
-            st.write("Jangan menyerah, ayo belajar lagi di menu Scanner!")
+            st.markdown(f"### Nilai: {int(score)}")
+            st.warning("Jangan menyerah! Baca lagi info di menu Scanner ya.")
 
 # === TAB 4: INFO PROJECT ===
 with tab4:
@@ -364,6 +360,6 @@ with tab4:
         **Fitur Unggulan:**
         - ✨ Deteksi Real-time dengan CNN
         - 📱 Support Kamera HP & Laptop
-        - 🎓 Modul Edukasi Interaktif
+        - 🎓 Modul Kuis Berjenjang (Leveling)
         """)
         st.caption("Dibuat dengan ❤️ menggunakan Python & Streamlit")
