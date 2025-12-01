@@ -58,26 +58,43 @@ st.markdown("""
         box-shadow: 0 6px 12px rgba(0,0,0,0.2);
     }
 
-    /* KOTAK INFO EDUKASI (REVISI: LEBIH MENARIK) */
+    /* KOTAK INFO EDUKASI */
     .info-card {
         padding: 25px;
         border-radius: 15px;
-        background: rgba(255, 255, 255, 0.9);
+        background: rgba(255, 255, 255, 0.95);
         box-shadow: 0 8px 16px rgba(0,0,0,0.1);
         margin-bottom: 20px;
-        border: 1px solid white;
+        border-left: 8px solid #00BFA5;
     }
     
-    /* WARNA KHUSUS */
-    .text-organik { color: #2E7D32 !important; }
-    .text-anorganik { color: #E65100 !important; }
+    /* CUSTOM HEADER (BIAR RAPI DI HP & LAPTOP) */
+    .custom-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: white;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    .header-text {
+        margin-left: 20px;
+        text-align: left;
+    }
+    @media (max-width: 600px) {
+        .custom-header { flex-direction: column; text-align: center; }
+        .header-text { margin-left: 0; margin-top: 10px; text-align: center; }
+    }
     
     /* MENGHILANGKAN KOTAK KOSONG */
     .css-card { display: none; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. DATABASE EDUKASI (REVISI: LEBIH LENGKAP & PERSUASIF) ---
+# --- 3. DATABASE EDUKASI ---
 info_sampah = {
     "ORGANIK": {
         "judul": "🌱 SAMPAH ORGANIK",
@@ -97,7 +114,7 @@ info_sampah = {
     }
 }
 
-# --- DATABASE KUIS PER LEVEL (REVISI: LEBIH BANYAK) ---
+# --- DATABASE KUIS PER LEVEL ---
 kuis_data = {
     "Level 1: Pemula (Basic)": [
         {"t": "Kulit jeruk termasuk jenis sampah apa?", "o": ["Organik", "Anorganik", "Residu"], "k": "Organik", "msg": "Betul! Kulit buah berasal dari alam."},
@@ -129,9 +146,8 @@ def load_lottieurl(url):
     except: return None
 
 model = load_model()
-# Animasi Sukses Baru (Bunga/Alam)
-lottie_success = load_lottieurl("https://assets10.lottiefiles.com/packages/lf20_u4yrau.json") 
-lottie_quiz_anim = load_lottieurl("https://assets8.lottiefiles.com/packages/lf20_zrqthn6o.json")
+# Animasi Tanaman Tumbuh (Pengganti Balon)
+lottie_flower = load_lottieurl("https://assets10.lottiefiles.com/packages/lf20_u4yrau.json") 
 lottie_sidebar = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_tutvdkg0.json")
 
 if 'history_data' not in st.session_state: st.session_state['history_data'] = []
@@ -182,28 +198,28 @@ def prediksi_gambar_diam(image):
 
 # ================= MAIN UI =================
 
-# SIDEBAR (REVISI SLOGAN)
+# SIDEBAR (Tetap ada sebagai pelengkap)
 with st.sidebar:
     if lottie_sidebar: st_lottie(lottie_sidebar, height=150, key="anim")
-    st.markdown("## EcoSort Edu 🌿")
-    # REVISI: Slogan Inspiratif
-    st.markdown("*'Satu langkah kecil memilah, lompatan besar untuk bumi.'*")
-    st.divider()
-    st.info("💡 **Did You Know?**\nSatu liter minyak jelantah bisa mencemari 1000 liter air tanah!")
+    st.markdown("### Menu Navigasi")
     st.caption("© 2025 Project UAS")
 
 if model is None:
     st.error("⚠️ Model belum ditemukan di GitHub.")
     st.stop()
 
-# HEADER (REVISI LOGO BUMI)
-c1, c2 = st.columns([0.5, 4])
-with c1:
-    # REVISI: Ikon Bumi
-    st.image("https://cdn-icons-png.flaticon.com/512/2947/2947656.png", width=85)
-with c2:
-    st.title("EcoSort Edu")
-    st.markdown("#### Klasifikasi & Edukasi Sampah")
+# --- HEADER CUSTOM HTML (SOLUSI SUPAYA RAPI DI HP & LAPTOP) ---
+st.markdown("""
+<div class="custom-header">
+    <img src="https://cdn-icons-png.flaticon.com/512/2947/2947656.png" width="80">
+    <div class="header-text">
+        <h1 style="margin:0; font-size: 2.5rem; color:#004D40;">EcoSort Edu</h1>
+        <p style="margin:0; font-size: 1.1rem; font-style: italic; color:#00695C;">
+        "Satu langkah kecil memilah, lompatan besar untuk bumi."
+        </p>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # TABS NAVIGATION
 tab1, tab2, tab3, tab4 = st.tabs(["📸 AI SCANNER", "📊 STATISTIK", "🎓 KUIS BERLEVEL", "ℹ️ INFO PROJECT"])
@@ -211,7 +227,7 @@ tab1, tab2, tab3, tab4 = st.tabs(["📸 AI SCANNER", "📊 STATISTIK", "🎓 KUI
 # === TAB 1: SCANNER ===
 with tab1:
     st.markdown("#### 1. Pilih Metode Input:")
-    mode = st.radio("", ["📁 Upload File", "📸 Kamera Foto", "📹 Live Video"], horizontal=True)
+    mode = st.radio("", ["📁 Upload File", "📸 Kamera Foto", "📹 Live Video"], horizontal=True, label_visibility="collapsed")
     st.write("---")
 
     col_kiri, col_kanan = st.columns([1.5, 1])
@@ -245,7 +261,7 @@ with tab1:
             if ctx.video_processor:
                 ctx.video_processor.mirror = mirror_mode
 
-    # PANEL HASIL (REVISI: TEKS LEBIH BANYAK)
+    # PANEL HASIL
     with col_kanan:
         st.markdown("#### 2. Hasil Analisis AI")
         
@@ -255,7 +271,7 @@ with tab1:
                 lbl, conf = prediksi_gambar_diam(img)
                 info = info_sampah[lbl]
                 
-                # Tampilan Kartu Hasil "Deep"
+                # Kartu Hasil dengan Penjelasan Lengkap
                 st.markdown(f"""
                 <div class="info-card">
                     <h2 style="margin-top:0; color:{'#2E7D32' if lbl=='ORGANIK' else '#E65100'}">{info['judul']}</h2>
@@ -263,8 +279,9 @@ with tab1:
                     <hr>
                     <p>{info['desc']}</p>
                     <p>{info['bahaya']}</p>
-                    <br>
-                    <p>{info['manfaat']}</p>
+                    <div style="background-color:#E0F2F1; padding:10px; border-radius:10px;">
+                        <p style="margin:0;">{info['manfaat']}</p>
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -277,6 +294,10 @@ with tab1:
                 st.info("👈 Masukkan gambar di sebelah kiri untuk melihat hasil.")
         else:
             st.info("Lihat hasil deteksi langsung pada layar video 👈")
+            
+    # INFO TAMBAHAN DI BAWAH SCANNER (Biar user HP tetap baca tanpa buka Sidebar)
+    st.write("---")
+    st.info("💡 **Tips Lingkungan:** Tahukah kamu? Satu liter minyak jelantah bisa mencemari 1000 liter air tanah! Jangan buang di wastafel ya.")
 
 # === TAB 2: DASHBOARD ===
 with tab2:
@@ -298,14 +319,10 @@ with tab2:
     else:
         st.warning("Belum ada data tersimpan. Yuk scan sampah dulu!")
 
-# === TAB 3: KUIS PER LEVEL (REVISI) ===
+# === TAB 3: KUIS PER LEVEL (ANIMASI BUNGA) ===
 with tab3:
-    col_hdr, col_anm = st.columns([3, 1])
-    with col_hdr:
-        st.subheader("🎓 Tantangan Pemilahan Sampah")
-        st.write("Pilih level kesulitanmu dan buktikan kamu peduli lingkungan!")
-    with col_anm:
-        if lottie_quiz_anim: st_lottie(lottie_quiz_anim, height=120)
+    st.subheader("🎓 Tantangan Pemilahan Sampah")
+    st.write("Pilih level kesulitanmu dan buktikan kamu peduli lingkungan!")
     
     st.divider()
 
@@ -333,9 +350,8 @@ with tab3:
         
     if st.button("Lihat Nilai Saya"):
         if score == 100:
-            # REVISI: Animasi Alam/Bunga
-            if lottie_success: st_lottie(lottie_success, height=200, key="success")
-            st.balloons()
+            # REVISI: ANIMASI BUNGA MEKAR (Bukan Balon Pesta)
+            if lottie_flower: st_lottie(lottie_flower, height=250, key="flower")
             st.markdown(f"### 🎉 SEMPURNA! Nilai: 100")
             st.success("Hebat! Kamu sudah siap jadi Duta Lingkungan.")
         elif score >= 60:
@@ -354,11 +370,11 @@ with tab4:
             st.image("grafik_performa.png", caption="Grafik Akurasi Model AI", use_container_width=True)
     with c2:
         st.write("""
-        **EcoSort Edu** adalah aplikasi berbasis Artificial Intelligence untuk membantu
+        **EcoSort Edu** adalah aplikasi berbasis teknologi untuk membantu
         edukasi pemilahan sampah di masyarakat.
         
         **Fitur Unggulan:**
-        - ✨ Deteksi Real-time dengan CNN
+        - ✨ Deteksi Real-time
         - 📱 Support Kamera HP & Laptop
         - 🎓 Modul Kuis Berjenjang (Leveling)
         """)
