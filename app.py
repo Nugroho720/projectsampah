@@ -59,7 +59,7 @@ def animation_nature_rise():
     st.markdown('<style>#nature-container { display: none; }</style>', unsafe_allow_html=True)
 
 
-# --- 3. CSS TEMA MINT & PERBAIKAN SIDEBAR ---
+# --- 3. CSS TEMA MINT & SIDEBAR FIX ---
 st.markdown("""
 <style>
     /* BACKGROUND GRADASI HIJAU TOSCA */
@@ -67,9 +67,6 @@ st.markdown("""
         background: linear-gradient(180deg, #A7FFEB 0%, #E0F7FA 100%);
         background-attachment: fixed;
     }
-    
-    /* PERBAIKAN: SAYA MENGHAPUS 'header {visibility: hidden;}' 
-       AGAR TOMBOL SIDEBAR MUNCUL KEMBALI DI HP & LAPTOP */
     
     /* MENYESUAIKAN WARNA HEADER BIAR MENYATU DENGAN BACKGROUND */
     [data-testid="stHeader"] {
@@ -236,7 +233,7 @@ def prediksi_gambar_diam(image):
 
 # ================= MAIN UI =================
 
-# --- SIDEBAR (SEKARANG TOMBOL BUKANYA SUDAH MUNCUL KEMBALI) ---
+# --- SIDEBAR (TIPS LINGKUNGAN ADA DISINI) ---
 with st.sidebar:
     if lottie_sidebar: st_lottie(lottie_sidebar, height=150, key="anim")
     st.markdown("## EcoSort Edu 🌿")
@@ -338,14 +335,7 @@ with tab1:
         else:
             st.info("Lihat hasil deteksi langsung pada layar video 👈")
             
-    # TIPS LINGKUNGAN (TETAP ADA DI BAWAH UNTUK KEMUDAHAN DI HP)
-    st.write("---")
-    st.markdown("""
-    <div style="background-color: #E0F7FA; padding: 15px; border-radius: 10px; border-left: 5px solid #00ACC1;">
-        <h4>💡 Tips Lingkungan:</h4>
-        <p style="margin:0;">Tahukah kamu? Satu liter minyak jelantah bisa mencemari 1000 liter air tanah! Jangan buang di wastafel ya.</p>
-    </div>
-    """, unsafe_allow_html=True)
+    # HAPUS: Tips lingkungan di bawah sudah dihapus sesuai permintaan.
 
 # === TAB 2: DASHBOARD ===
 with tab2:
@@ -414,18 +404,4 @@ with tab3:
 # === TAB 4: INFO PROJECT ===
 with tab4:
     st.header("Tentang Aplikasi")
-    c1, c2 = st.columns(2)
-    with c1:
-        if os.path.exists("grafik_performa.png"):
-            st.image("grafik_performa.png", caption="Grafik Akurasi Model AI", use_container_width=True)
-    with c2:
-        st.write("""
-        **EcoSort Edu** adalah aplikasi berbasis teknologi untuk membantu
-        edukasi pemilahan sampah di masyarakat.
-        
-        **Fitur Unggulan:**
-        - ✨ Deteksi Real-time
-        - 📱 Support Kamera HP & Laptop
-        - 🎓 Modul Kuis Berjenjang (Leveling)
-        """)
-        st.caption("Dibuat dengan ❤️ menggunakan Python & Streamlit")
+    c1, c2
