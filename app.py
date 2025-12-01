@@ -13,17 +13,16 @@ import requests
 import os
 import time
 
-# --- 1. KONFIGURASI HALAMAN (SIDEBAR TERBUKA OTOMATIS) ---
+# --- 1. KONFIGURASI HALAMAN (SIDEBAR WAJIB EXPANDED) ---
 st.set_page_config(
     page_title="EcoSort Edu",
     page_icon="🌍",
     layout="wide",
-    initial_sidebar_state="expanded"  # <--- INI KUNCINYA BIAR SIDEBAR MUNCUL
+    initial_sidebar_state="expanded" 
 )
 
-# --- 2. MAGIC CODE: ANIMASI ALAM DARI BAWAH (PENGGANTI BALON) ---
+# --- 2. MAGIC CODE: ANIMASI ALAM (Bunga/Daun dari Bawah) ---
 def animation_nature_rise():
-    # Ini adalah CSS & HTML untuk membuat efek daun/bunga terbang dari bawah
     st.markdown("""
     <style>
         @keyframes floatUp {
@@ -56,12 +55,11 @@ def animation_nature_rise():
         <div class="nature-particle" style="left: 75%; animation-delay: 0.8s;">🍃</div>
     </div>
     """, unsafe_allow_html=True)
-    # Efek muncul selama 5 detik lalu berhenti agar tidak mengganggu
     time.sleep(5)
     st.markdown('<style>#nature-container { display: none; }</style>', unsafe_allow_html=True)
 
 
-# --- 3. CSS TEMA MINT & TEXT HITAM ---
+# --- 3. CSS TEMA MINT & PERBAIKAN SIDEBAR ---
 st.markdown("""
 <style>
     /* BACKGROUND GRADASI HIJAU TOSCA */
@@ -70,9 +68,14 @@ st.markdown("""
         background-attachment: fixed;
     }
     
-    /* HIDE HEADER BAWAAN */
-    header {visibility: hidden;}
+    /* PERBAIKAN: SAYA MENGHAPUS 'header {visibility: hidden;}' 
+       AGAR TOMBOL SIDEBAR MUNCUL KEMBALI DI HP & LAPTOP */
     
+    /* MENYESUAIKAN WARNA HEADER BIAR MENYATU DENGAN BACKGROUND */
+    [data-testid="stHeader"] {
+        background-color: transparent;
+    }
+
     /* TEKS HITAM JELAS */
     .stMarkdown, .stText, h1, h2, h3, h4, h5, h6, p, div, span, label, li {
         color: #004D40 !important;
@@ -110,7 +113,7 @@ st.markdown("""
         border-left: 8px solid #00BFA5;
     }
     
-    /* CUSTOM HEADER (TRANSPARAN) */
+    /* CUSTOM HEADER */
     .custom-header {
         display: flex;
         align-items: center;
@@ -233,17 +236,14 @@ def prediksi_gambar_diam(image):
 
 # ================= MAIN UI =================
 
-# --- SIDEBAR (SEKARANG AKAN MUNCUL OTOMATIS) ---
+# --- SIDEBAR (SEKARANG TOMBOL BUKANYA SUDAH MUNCUL KEMBALI) ---
 with st.sidebar:
     if lottie_sidebar: st_lottie(lottie_sidebar, height=150, key="anim")
     st.markdown("## EcoSort Edu 🌿")
     st.markdown("*'Satu langkah kecil memilah, lompatan besar untuk bumi.'*")
     st.divider()
-    
-    # TIPS LINGKUNGAN DI PINDAH KE SINI
     st.markdown("### 💡 Tips Lingkungan:")
     st.info("Tahukah kamu? Satu liter minyak jelantah bisa mencemari 1000 liter air tanah! Jangan buang di wastafel ya.")
-    
     st.divider()
     st.caption("© 2025 Project UAS")
 
@@ -251,7 +251,7 @@ if model is None:
     st.error("⚠️ Model belum ditemukan di GitHub.")
     st.stop()
 
-# HEADER (Tanpa Kotak Putih)
+# HEADER
 st.markdown("""
 <div class="custom-header">
     <img src="https://cdn-icons-png.flaticon.com/512/2947/2947656.png" width="90">
@@ -337,6 +337,15 @@ with tab1:
                 st.info("👈 Masukkan gambar di sebelah kiri untuk melihat hasil.")
         else:
             st.info("Lihat hasil deteksi langsung pada layar video 👈")
+            
+    # TIPS LINGKUNGAN (TETAP ADA DI BAWAH UNTUK KEMUDAHAN DI HP)
+    st.write("---")
+    st.markdown("""
+    <div style="background-color: #E0F7FA; padding: 15px; border-radius: 10px; border-left: 5px solid #00ACC1;">
+        <h4>💡 Tips Lingkungan:</h4>
+        <p style="margin:0;">Tahukah kamu? Satu liter minyak jelantah bisa mencemari 1000 liter air tanah! Jangan buang di wastafel ya.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # === TAB 2: DASHBOARD ===
 with tab2:
@@ -358,9 +367,9 @@ with tab2:
     else:
         st.warning("Belum ada data tersimpan. Yuk scan sampah dulu!")
 
-# === TAB 3: KUIS PER LEVEL (ANIMASI ALAM DARI BAWAH) ===
+# === TAB 3: KUIS PER LEVEL ===
 with tab3:
-    col_hdr, col_anim = st.columns([3,1])
+    col_hdr, col_anim = st.columns([3, 1])
     with col_hdr:
         st.subheader("🎓 Tantangan Pemilahan Sampah")
         st.write("Pilih level kesulitanmu dan buktikan kamu peduli lingkungan!")
@@ -369,6 +378,7 @@ with tab3:
     
     st.divider()
 
+    # Pilih Level
     pilihan_level = st.selectbox("Pilih Tingkat Kesulitan:", list(kuis_data.keys()))
     soal_aktif = kuis_data[pilihan_level]
     
@@ -390,7 +400,7 @@ with tab3:
         
     if st.button("Lihat Nilai Saya"):
         if score == 100:
-            # MEMANGGIL MAGIC ANIMATION (Bunga Naik dari Bawah)
+            # ANIMASI ALAM / BUNGA (DARI BAWAH)
             animation_nature_rise()
             st.markdown(f"### 🎉 SEMPURNA! Nilai: 100")
             st.success("Hebat! Kamu sudah siap jadi Duta Lingkungan.")
