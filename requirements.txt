@@ -9,3 +9,4 @@ streamlit-webrtc
 streamlit-lottie
 requests
 Pillow
+streamlit-option-menu
