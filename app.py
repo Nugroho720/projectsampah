@@ -8,128 +8,113 @@ from datetime import datetime
 import cv2
 import av
 from streamlit_webrtc import webrtc_streamer, WebRtcMode
-from streamlit_lottie import st_lottie
-from streamlit_option_menu import option_menu
 import requests
 import os
 
 # --- 1. KONFIGURASI HALAMAN ---
 st.set_page_config(
-    page_title="EcoSort Pro X",
+    page_title="EcoSort Premium",
     page_icon="♻️",
     layout="wide",
-    initial_sidebar_state="expanded"
 )
 
-# --- 2. CSS MODERN (GLASSMORPHISM STYLE) ---
+# --- 2. CSS PREMIUM (TAMPILAN CANTIK & BERSIH) ---
 st.markdown("""
 <style>
-    /* Import Font Keren */
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
-
-    html, body, [class*="css"]  {
-        font-family: 'Poppins', sans-serif;
-    }
-
-    /* Background Gradient Halus */
+    /* Background Halaman */
     .stApp {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        background-color: #f4f9f4; /* Hijau Mint Sangat Muda */
     }
     
-    /* Styling Sidebar */
-    [data-testid="stSidebar"] {
+    /* Styling Container Putih (Kartu) */
+    .css-card {
         background-color: #ffffff;
-        box-shadow: 2px 0 10px rgba(0,0,0,0.05);
-    }
-
-    /* Card Style untuk Info */
-    .metric-card {
-        background: white;
         padding: 20px;
         border-radius: 15px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        text-align: center;
-        transition: transform 0.3s;
-    }
-    .metric-card:hover {
-        transform: translateY(-5px);
-    }
-
-    /* Hasil Deteksi Card */
-    .result-card {
-        padding: 25px;
-        border-radius: 20px;
-        text-align: center;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-        color: white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         margin-bottom: 20px;
+        border: 1px solid #e0e0e0;
     }
-    .organic {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-    }
-    .anorganic {
-        background: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%);
-    }
-
-    /* Judul Halaman */
+    
+    /* Judul Utama */
     h1, h2, h3 {
-        color: #2c3e50;
+        color: #2e7d32 !important;
+        font-family: 'Helvetica', sans-serif;
         font-weight: 700;
     }
     
-    /* Tombol Kustom */
+    /* Teks Biasa */
+    p, div, label, span {
+        color: #333333 !important;
+    }
+
+    /* Tombol Cantik */
     .stButton>button {
-        border-radius: 50px;
-        background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%);
-        color: white;
+        background: linear-gradient(90deg, #4CAF50 0%, #2E7D32 100%);
+        color: white !important;
         border: none;
-        padding: 10px 25px;
-        font-weight: 600;
-        box-shadow: 0 4px 10px rgba(56, 239, 125, 0.4);
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: bold;
+        transition: 0.3s;
+        width: 100%;
+    }
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
+    }
+
+    /* Highlight Hasil */
+    .result-box-organik {
+        background-color: #e8f5e9;
+        border-left: 5px solid #4CAF50;
+        padding: 15px;
+        border-radius: 5px;
+    }
+    .result-box-anorganik {
+        background-color: #fff3e0;
+        border-left: 5px solid #ff9800;
+        padding: 15px;
+        border-radius: 5px;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. DATABASE & ASET ---
+# --- 3. DATABASE & LOGIKA AI ---
+
+# Database Info Edukasi
 info_sampah = {
     "ORGANIK": {
-        "judul": "🌱 ORGANIK (Organic)",
-        "sifat": "Mudah Terurai (Biodegradable)",
-        "desc": "Sampah ini berasal dari alam dan bisa dijadikan pupuk kompos.",
-        "contoh": "Sisa makanan, Daun, Kulit Buah, Kayu kecil."
+        "judul": "🌱 ORGANIK",
+        "desc": "Sampah sisa makhluk hidup yang mudah terurai.",
+        "saran": "Olah menjadi pupuk kompos atau pakan ternak."
     },
     "ANORGANIK": {
-        "judul": "⚙️ ANORGANIK (Inorganic)",
-        "sifat": "Sulit Terurai (Non-Biodegradable)",
-        "desc": "Sampah buatan pabrik. Wajib didaur ulang agar tidak mencemari lingkungan.",
-        "contoh": "Plastik, Botol, Kaleng, Kaca, Styrofoam."
+        "judul": "⚙️ ANORGANIK",
+        "desc": "Sampah buatan pabrik yang sulit/tidak bisa terurai.",
+        "saran": "Pisahkan untuk didaur ulang (Bank Sampah)."
     }
 }
+
+# Session State untuk History
+if 'history_data' not in st.session_state:
+    st.session_state['history_data'] = []
 
 @st.cache_resource
 def load_model():
     if not os.path.exists('model_sampah.h5'): return None
     return tf.keras.models.load_model('model_sampah.h5')
 
-@st.cache_data
-def load_lottieurl(url):
-    try:
-        r = requests.get(url)
-        return r.json() if r.status_code == 200 else None
-    except: return None
-
 model = load_model()
-lottie_eco = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_tutvdkg0.json")
 
-if 'history_data' not in st.session_state: st.session_state['history_data'] = []
-
-# --- 4. ENGINE AI ---
+# Class Video Processor (Dioptimalkan)
 class VideoProcessor:
     def recv(self, frame):
         img = frame.to_ndarray(format="bgr24")
         if model is not None:
-            img_input = cv2.resize(img, (64, 64))
-            img_input = cv2.cvtColor(img_input, cv2.COLOR_BGR2RGB)
+            # Resize kecil dulu biar cepat prosesnya
+            img_small = cv2.resize(img, (64, 64))
+            img_input = cv2.cvtColor(img_small, cv2.COLOR_BGR2RGB)
             img_input = img_input.astype("float32") / 255.0
             img_input = np.expand_dims(img_input, axis=0)
 
@@ -137,24 +122,25 @@ class VideoProcessor:
             confidence = prediction[0][0]
 
             if confidence > 0.5:
-                label, color = "ORGANIK", (0, 200, 0)
+                label = "ORGANIK"
+                color = (0, 200, 0) # Hijau
                 prob = confidence
             else:
-                label, color = "ANORGANIK", (0, 100, 255)
+                label = "ANORGANIK"
+                color = (0, 100, 255) # Oranye
                 prob = 1 - confidence
 
-            # Desain Kotak Video Lebih Modern
-            cv2.rectangle(img, (0, 0), (img.shape[1], 60), (0, 0, 0), -1) 
-            cv2.putText(img, f"DETEKSI: {label}", (20, 40), cv2.FONT_HERSHEY_DUPLEX, 1, color, 2)
+            # Gambar GUI
+            cv2.rectangle(img, (0, 0), (220, 50), (255, 255, 255), -1) 
+            cv2.putText(img, f"{label}", (10, 35), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
             
-            # Garis bidik
+            # Kotak Bidik
             h, w, _ = img.shape
-            cv2.line(img, (w//2-20, h//2), (w//2+20, h//2), (255, 255, 255), 2)
-            cv2.line(img, (w//2, h//2-20), (w//2, h//2+20), (255, 255, 255), 2)
-            
+            cv2.rectangle(img, (w//2-80, h//2-80), (w//2+80, h//2+80), color, 3)
+
         return av.VideoFrame.from_ndarray(img, format="bgr24")
 
-def prediksi_gambar_diam(image):
+def prediksi_gambar(image):
     img_resized = image.resize((64, 64))
     img_array = np.array(img_resized)
     if img_array.shape == (64, 64): img_array = np.stack((img_array,)*3, axis=-1)
@@ -164,181 +150,165 @@ def prediksi_gambar_diam(image):
     skor = prediction[0][0]
     return ("ORGANIK", skor) if skor > 0.5 else ("ANORGANIK", 1 - skor)
 
-def tampilkan_hasil_keren(label, conf):
-    style_class = "organic" if label == "ORGANIK" else "anorganic"
-    data = info_sampah[label]
-    
-    st.markdown(f"""
-    <div class="result-card {style_class}">
-        <h1 style="color:white; margin:0;">{data['judul']}</h1>
-        <p style="font-size:1.2em; opacity:0.9;">{data['sifat']}</p>
-        <h3 style="color:white; margin-top:10px;">Akurasi AI: {conf*100:.1f}%</h3>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    with st.expander("📚 Pelajari lebih lanjut tentang sampah ini"):
-        st.info(f"**Definisi:** {data['desc']}")
-        st.success(f"**Contoh:** {data['contoh']}")
+# ================= MAIN UI LAYOUT =================
 
-# ================= MAIN APP =================
+# Header
+c1, c2 = st.columns([1, 6])
+with c1:
+    st.image("https://cdn-icons-png.flaticon.com/512/3299/3299956.png", width=80)
+with c2:
+    st.title("EcoSort Premium")
+    st.caption("Sistem Cerdas Klasifikasi Sampah & Manajemen Lingkungan")
 
-# --- SIDEBAR MENU (INI YANG BIKIN MEWAH) ---
-with st.sidebar:
-    if lottie_eco: st_lottie(lottie_eco, height=150)
-    st.write("---")
-    
-    # Menu Navigasi Keren
-    selected = option_menu(
-        menu_title="Main Menu",
-        options=["Scanner", "Dashboard", "Kuis", "About"],
-        icons=["camera-fill", "bar-chart-fill", "controller", "info-circle-fill"],
-        menu_icon="cast",
-        default_index=0,
-        styles={
-            "container": {"padding": "0!important", "background-color": "#ffffff"},
-            "icon": {"color": "green", "font-size": "20px"}, 
-            "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#eee"},
-            "nav-link-selected": {"background-color": "#4CAF50"},
-        }
-    )
-    
-    st.write("---")
-    st.caption("© 2025 Project UAS | v2.0 Pro")
+st.write("---")
 
 if model is None:
     st.error("⚠️ Model AI tidak ditemukan! Pastikan file 'model_sampah.h5' ada di GitHub.")
     st.stop()
 
-# --- HALAMAN 1: SCANNER ---
-if selected == "Scanner":
-    st.title("📸 AI Waste Scanner")
-    st.write("Pilih metode input untuk mendeteksi jenis sampah.")
+# TABS UTAMA
+tabs = st.tabs(["📸 SCANNER", "📊 DASHBOARD", "📚 ENSIKLOPEDIA"])
+
+# --- TAB 1: SCANNER ---
+with tabs[0]:
+    col_kiri, col_kanan = st.columns([1, 1.5])
     
-    # Custom Tab Style
-    input_type = option_menu(
-        menu_title=None,
-        options=["Upload File", "Kamera", "Live Video"],
-        icons=["cloud-upload", "camera", "webcam"],
-        orientation="horizontal",
-    )
-    
-    st.write("---")
-
-    if input_type == "Upload File":
-        c1, c2 = st.columns([1, 1])
-        with c1:
-            uploaded = st.file_uploader("📂 Tarik gambar sampah kesini", type=['jpg','png','jpeg'])
-            if uploaded:
-                img = Image.open(uploaded)
-                st.image(img, use_container_width=True, caption="Preview Gambar")
-        with c2:
-            if uploaded:
-                with st.spinner("Sedang menganalisis..."):
-                    lbl, conf = prediksi_gambar_diam(img)
-                    tampilkan_hasil_keren(lbl, conf)
-                    if st.button("💾 Simpan Data Log"):
-                        st.session_state['history_data'].append({"Waktu": datetime.now().strftime("%H:%M"), "Jenis": lbl})
-                        st.toast("Data berhasil disimpan!", icon="✅")
-
-    elif input_type == "Kamera":
-        col_cam, col_res = st.columns([1, 1])
-        with col_cam:
-            cam = st.camera_input("Jepret Foto")
-        with col_res:
-            if cam:
-                img = Image.open(cam)
-                lbl, conf = prediksi_gambar_diam(img)
-                st.image(img, width=300)
-                tampilkan_hasil_keren(lbl, conf)
-                if st.button("💾 Simpan Hasil"):
-                    st.session_state['history_data'].append({"Waktu": datetime.now().strftime("%H:%M"), "Jenis": lbl})
-                    st.toast("Tersimpan!")
-
-    elif input_type == "Live Video":
-        st.info("💡 Arahkan sampah ke kotak deteksi di bawah ini.")
-        col_vid, col_info = st.columns([2, 1])
-        with col_vid:
+    with col_kiri:
+        st.markdown('<div class="css-card">', unsafe_allow_html=True)
+        st.subheader("1. Input Gambar")
+        pilihan = st.radio("Metode:", ["📂 Upload File", "📸 Ambil Foto", "📹 Live Video"], horizontal=True)
+        
+        image_input = None
+        
+        if pilihan == "📂 Upload File":
+            uploaded = st.file_uploader("Pilih file...", type=['jpg','png','jpeg'])
+            if uploaded: image_input = Image.open(uploaded)
+            
+        elif pilihan == "📸 Ambil Foto":
+            cam = st.camera_input("Jepret sekarang")
+            if cam: image_input = Image.open(cam)
+            
+        elif pilihan == "📹 Live Video":
+            st.info("💡 Koneksi Live Video tergantung kecepatan internet.")
             webrtc_streamer(key="live", mode=WebRtcMode.SENDRECV,
                             rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
                             video_processor_factory=VideoProcessor,
                             media_stream_constraints={"video": True, "audio": False},
                             async_processing=True)
-        with col_info:
-            st.markdown("""
-            ### Petunjuk:
-            1. Pastikan cahaya cukup terang.
-            2. Dekatkan sampah ke kamera.
-            3. Tunggu hingga kotak deteksi muncul.
-            """)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-# --- HALAMAN 2: DASHBOARD ---
-elif selected == "Dashboard":
-    st.title("📊 Statistik Sampah")
-    st.markdown("Pantau data sampah yang telah kamu scan secara real-time.")
+    with col_kanan:
+        st.markdown('<div class="css-card">', unsafe_allow_html=True)
+        st.subheader("2. Hasil Analisis AI")
+        
+        if image_input:
+            # Tampilkan Gambar
+            st.image(image_input, caption="Preview Input", width=300)
+            st.write("---")
+            
+            # Proses AI
+            label, conf = prediksi_gambar(image_input)
+            info = info_sampah[label]
+            
+            # Kotak Hasil Warna-warni
+            css_class = "result-box-organik" if label == "ORGANIK" else "result-box-anorganik"
+            st.markdown(f"""
+            <div class="{css_class}">
+                <h2 style="margin:0;">{info['judul']}</h2>
+                <p><b>Akurasi:</b> {conf*100:.1f}%</p>
+                <p>{info['desc']}</p>
+                <p>💡 <b>Saran:</b> {info['saran']}</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.write("")
+            if st.button("💾 Simpan Data ke Dashboard"):
+                st.session_state['history_data'].append({
+                    "Waktu": datetime.now().strftime("%H:%M:%S"),
+                    "Jenis": label,
+                    "Akurasi": f"{conf*100:.1f}%"
+                })
+                st.toast("Data berhasil disimpan!", icon="✅")
+        else:
+            if pilihan != "📹 Live Video":
+                st.info("👈 Silakan masukkan gambar di menu sebelah kiri.")
+            else:
+                st.write("Sedang menjalankan mode video...")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+
+# --- TAB 2: DASHBOARD ---
+with tabs[1]:
+    st.markdown("### 📊 Statistik Sampah Terkumpul")
     
-    if st.session_state['history_data']:
+    if len(st.session_state['history_data']) > 0:
         df = pd.DataFrame(st.session_state['history_data'])
         
-        # Metrik Cards
+        # Metrik Atas
         m1, m2, m3 = st.columns(3)
-        m1.metric("Total Scan", len(df), "sampah")
-        m2.metric("Organik", len(df[df['Jenis']=='ORGANIK']), "item", delta_color="normal")
-        m3.metric("Anorganik", len(df[df['Jenis']=='ANORGANIK']), "item", delta_color="inverse")
+        with m1: 
+            st.markdown('<div class="css-card"><h3>Total</h3><h1>'+str(len(df))+'</h1></div>', unsafe_allow_html=True)
+        with m2:
+            org = len(df[df['Jenis']=='ORGANIK'])
+            st.markdown('<div class="css-card"><h3 style="color:green!important">Organik</h3><h1>'+str(org)+'</h1></div>', unsafe_allow_html=True)
+        with m3:
+            anorg = len(df[df['Jenis']=='ANORGANIK'])
+            st.markdown('<div class="css-card"><h3 style="color:orange!important">Anorganik</h3><h1>'+str(anorg)+'</h1></div>', unsafe_allow_html=True)
+
+        st.write("")
         
-        st.write("---")
-        
-        c1, c2 = st.columns([1.5, 1])
-        with c1:
-            fig = px.pie(df, names='Jenis', hole=0.5, 
-                         color='Jenis', color_discrete_map={'ORGANIK':'#38ef7d', 'ANORGANIK':'#ff5e62'},
-                         title="Persentase Sampah")
-            fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+        # Grafik & Tabel
+        c_chart, c_table = st.columns([1, 1.5])
+        with c_chart:
+            st.markdown('<div class="css-card">', unsafe_allow_html=True)
+            fig = px.pie(df, names='Jenis', title='Persentase Sampah',
+                         color='Jenis', color_discrete_map={'ORGANIK':'#4CAF50', 'ANORGANIK':'#FF9800'}, hole=0.5)
             st.plotly_chart(fig, use_container_width=True)
-        with c2:
-            st.markdown("### 📝 Log Aktivitas")
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+        with c_table:
+            st.markdown('<div class="css-card">', unsafe_allow_html=True)
+            st.subheader("📝 Riwayat Deteksi Terbaru")
             st.dataframe(df, use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
     else:
-        st.warning("Belum ada data. Yuk scan sampah dulu di menu Scanner!")
+        st.warning("Data kosong. Silakan scan sampah dulu di menu Scanner!")
 
-# --- HALAMAN 3: KUIS ---
-elif selected == "Kuis":
-    st.title("🎮 Kuis Lingkungan")
-    st.write("Seberapa jago kamu memilah sampah?")
+# --- TAB 3: ENSIKLOPEDIA ---
+with tabs[2]:
+    st.markdown("### 📚 Ensiklopedia Sampah")
+    c1, c2 = st.columns(2)
     
-    with st.container():
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-        q1 = st.radio("1. Botol kaca bekas sirup termasuk jenis sampah apa?", ["Organik", "Anorganik", "Residu"], index=None)
-        if q1:
-            if q1 == "Anorganik": st.success("Benar! Kaca sulit terurai.")
-            else: st.error("Salah. Kaca adalah anorganik.")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-    st.write("")
-    
-    with st.container():
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-        q2 = st.radio("2. Manakah yang bisa dijadikan pupuk kompos?", ["Plastik", "Kulit Pisang", "Kaleng"], index=None)
-        if q2:
-            if q2 == "Kulit Pisang": st.success("Tepat sekali! 🍌")
-            else: st.error("Kurang tepat.")
-        st.markdown('</div>', unsafe_allow_html=True)
-
-# --- HALAMAN 4: ABOUT ---
-elif selected == "About":
-    st.title("ℹ️ Tentang Aplikasi")
-    c1, c2 = st.columns([1, 2])
     with c1:
-        if os.path.exists("grafik_performa.png"):
-            st.image("grafik_performa.png", caption="Grafik Akurasi Model", use_container_width=True)
-    with c2:
-        st.markdown("""
-        ### EcoSort Pro X
-        Aplikasi ini dikembangkan sebagai tugas akhir mata kuliah **Pengenalan Pola**.
-        Menggunakan teknologi **Deep Learning (CNN)** untuk mengklasifikasikan citra sampah secara otomatis.
+        st.markdown('<div class="css-card" style="border-top: 5px solid green;">', unsafe_allow_html=True)
+        st.image("https://cdn-icons-png.flaticon.com/512/2909/2909796.png", width=100)
+        st.subheader("Tentang Organik")
+        st.write("""
+        Sampah organik adalah sampah yang berasal dari sisa-sisa makhluk hidup, 
+        baik hewan, tanaman, maupun manusia.
         
-        **Teknologi:**
-        - Python & TensorFlow
-        - Streamlit Framework
-        - OpenCV Computer Vision
+        **Ciri-ciri:**
+        - Mudah membusuk
+        - Mengandung air
+        - Dapat diurai oleh mikroorganisme
+        
+        **Contoh:** Kulit pisang, duri ikan, sayuran layu.
         """)
-        st.info("Developed with ❤️ by Kelompok 5")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    with c2:
+        st.markdown('<div class="css-card" style="border-top: 5px solid orange;">', unsafe_allow_html=True)
+        st.image("https://cdn-icons-png.flaticon.com/512/9632/9632631.png", width=100)
+        st.subheader("Tentang Anorganik")
+        st.write("""
+        Sampah anorganik adalah sampah yang dihasilkan dari bahan-bahan non-hayati,
+        baik berupa produk sintetik maupun hasil proses teknologi.
+        
+        **Ciri-ciri:**
+        - Sangat sulit terurai (bisa ratusan tahun)
+        - Tahan air dan cuaca
+        - Bisa didaur ulang (Recycle)
+        
+        **Contoh:** Botol plastik, kaleng soda, kaca, styrofoam.
+        """)
+        st.markdown('</div>', unsafe_allow_html=True)
