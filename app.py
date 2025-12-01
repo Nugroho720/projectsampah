@@ -11,15 +11,57 @@ from streamlit_webrtc import webrtc_streamer, WebRtcMode
 from streamlit_lottie import st_lottie
 import requests
 import os
+import time
 
-# --- 1. KONFIGURASI HALAMAN ---
+# --- 1. KONFIGURASI HALAMAN (SIDEBAR TERBUKA OTOMATIS) ---
 st.set_page_config(
     page_title="EcoSort Edu",
     page_icon="🌍",
     layout="wide",
+    initial_sidebar_state="expanded"  # <--- INI KUNCINYA BIAR SIDEBAR MUNCUL
 )
 
-# --- 2. CSS & TEMA "CLEAN TOSCA" ---
+# --- 2. MAGIC CODE: ANIMASI ALAM DARI BAWAH (PENGGANTI BALON) ---
+def animation_nature_rise():
+    # Ini adalah CSS & HTML untuk membuat efek daun/bunga terbang dari bawah
+    st.markdown("""
+    <style>
+        @keyframes floatUp {
+            0% { bottom: -100px; opacity: 0; transform: rotate(0deg); }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { bottom: 100vh; opacity: 0; transform: rotate(360deg); }
+        }
+        .nature-particle {
+            position: fixed;
+            bottom: -100px;
+            z-index: 9999;
+            font-size: 2rem;
+            animation: floatUp 4s ease-in infinite;
+        }
+    </style>
+    
+    <div id="nature-container">
+        <div class="nature-particle" style="left: 10%; animation-delay: 0s;">🌿</div>
+        <div class="nature-particle" style="left: 20%; animation-delay: 1s;">🌸</div>
+        <div class="nature-particle" style="left: 30%; animation-delay: 2s;">🍃</div>
+        <div class="nature-particle" style="left: 40%; animation-delay: 0.5s;">🍂</div>
+        <div class="nature-particle" style="left: 50%; animation-delay: 1.5s;">🌿</div>
+        <div class="nature-particle" style="left: 60%; animation-delay: 0.2s;">🌸</div>
+        <div class="nature-particle" style="left: 70%; animation-delay: 2.5s;">🍃</div>
+        <div class="nature-particle" style="left: 80%; animation-delay: 1s;">🌻</div>
+        <div class="nature-particle" style="left: 90%; animation-delay: 0s;">🌿</div>
+        <div class="nature-particle" style="left: 15%; animation-delay: 1.8s;">🍂</div>
+        <div class="nature-particle" style="left: 25%; animation-delay: 3s;">🌸</div>
+        <div class="nature-particle" style="left: 75%; animation-delay: 0.8s;">🍃</div>
+    </div>
+    """, unsafe_allow_html=True)
+    # Efek muncul selama 5 detik lalu berhenti agar tidak mengganggu
+    time.sleep(5)
+    st.markdown('<style>#nature-container { display: none; }</style>', unsafe_allow_html=True)
+
+
+# --- 3. CSS TEMA MINT & TEXT HITAM ---
 st.markdown("""
 <style>
     /* BACKGROUND GRADASI HIJAU TOSCA */
@@ -31,7 +73,7 @@ st.markdown("""
     /* HIDE HEADER BAWAAN */
     header {visibility: hidden;}
     
-    /* TEKS HITAM JELAS (ANTI DARK MODE) */
+    /* TEKS HITAM JELAS */
     .stMarkdown, .stText, h1, h2, h3, h4, h5, h6, p, div, span, label, li {
         color: #004D40 !important;
         font-family: 'Segoe UI', sans-serif;
@@ -43,7 +85,7 @@ st.markdown("""
         border-right: 1px solid #B2DFDB;
     }
     
-    /* TOMBOL UPDATE */
+    /* TOMBOL */
     .stButton>button {
         background: linear-gradient(45deg, #00BFA5, #1DE9B6);
         color: white !important;
@@ -58,7 +100,7 @@ st.markdown("""
         box-shadow: 0 6px 12px rgba(0,0,0,0.2);
     }
 
-    /* KOTAK INFO EDUKASI */
+    /* KOTAK INFO */
     .info-card {
         padding: 25px;
         border-radius: 15px;
@@ -68,7 +110,7 @@ st.markdown("""
         border-left: 8px solid #00BFA5;
     }
     
-    /* CUSTOM HEADER (TRANSPARAN / TANPA KOTAK PUTIH) */
+    /* CUSTOM HEADER (TRANSPARAN) */
     .custom-header {
         display: flex;
         align-items: center;
@@ -76,45 +118,40 @@ st.markdown("""
         padding: 20px;
         margin-bottom: 20px;
         flex-wrap: wrap;
-        /* Background dihapus biar menyatu */
     }
     .header-text {
         margin-left: 20px;
         text-align: left;
     }
-    
-    /* RESPONSIF HP */
     @media (max-width: 600px) {
         .custom-header { flex-direction: column; text-align: center; }
         .header-text { margin-left: 0; margin-top: 10px; text-align: center; }
     }
     
-    /* MENGHILANGKAN KOTAK KOSONG */
     .css-card { display: none; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. DATABASE EDUKASI ---
+# --- 4. DATABASE & MODEL ---
 info_sampah = {
     "ORGANIK": {
         "judul": "🌱 SAMPAH ORGANIK",
         "sifat": "✅ Mudah Terurai (Biodegradable)",
         "desc": "Sampah ini berasal dari alam. Jika dibiarkan di tanah, ia akan membusuk dan menyatu dengan bumi.",
-        "bahaya": "⚠️ **Hati-hati:** Jika sampah ini ditumpuk di dalam plastik tertutup (TPA), ia akan menghasilkan **Gas Metana** yang menyebabkan Pemanasan Global (Global Warming)!",
-        "manfaat": "✨ **Solusi Emas:** Jangan buang percuma! Olah menjadi **Pupuk Kompos** untuk menyuburkan tanaman ibumu, atau jadikan **Eco-Enzyme** pembersih alami.",
+        "bahaya": "⚠️ **Hati-hati:** Jika sampah ini ditumpuk di dalam plastik tertutup (TPA), ia akan menghasilkan **Gas Metana** yang menyebabkan Pemanasan Global!",
+        "manfaat": "✨ **Solusi Emas:** Jangan buang percuma! Olah menjadi **Pupuk Kompos** atau **Eco-Enzyme**.",
         "aksi": "Masukkan ke lubang biopori atau komposter rumah."
     },
     "ANORGANIK": {
         "judul": "⚙️ SAMPAH ANORGANIK",
         "sifat": "❌ Sulit Terurai (Bisa Ratusan Tahun)",
         "desc": "Sampah buatan manusia/pabrik. Bakteri pengurai tidak doyan sampah ini.",
-        "bahaya": "⚠️ **Bahaya Fatal:** Jika dibuang ke sungai, ia menyumbat dan bikin banjir. Jika dibuang ke laut, ia dimakan ikan dan menjadi **Mikroplastik** yang akhirnya kita makan juga!",
-        "manfaat": "✨ **Solusi Cerdas:** Sampah ini adalah **Uang**! Kumpulkan, bersihkan, dan jual ke **Bank Sampah**. Atau kreasikan menjadi kerajinan tangan yang cantik.",
+        "bahaya": "⚠️ **Bahaya Fatal:** Jika dibuang ke laut, ia menjadi **Mikroplastik** yang akhirnya kita makan juga!",
+        "manfaat": "✨ **Solusi Cerdas:** Sampah ini adalah **Uang**! Kumpulkan dan jual ke **Bank Sampah**.",
         "aksi": "Pisahkan dari sampah basah. Setorkan ke pemulung atau Bank Sampah."
     }
 }
 
-# --- DATABASE KUIS PER LEVEL ---
 kuis_data = {
     "Level 1: Pemula (Basic)": [
         {"t": "Kulit jeruk termasuk jenis sampah apa?", "o": ["Organik", "Anorganik", "Residu"], "k": "Organik", "msg": "Betul! Kulit buah berasal dari alam."},
@@ -146,12 +183,12 @@ def load_lottieurl(url):
     except: return None
 
 model = load_model()
-lottie_flower = load_lottieurl("https://assets10.lottiefiles.com/packages/lf20_u4yrau.json") 
 lottie_sidebar = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_tutvdkg0.json")
+lottie_quiz = load_lottieurl("https://assets8.lottiefiles.com/packages/lf20_zrqthn6o.json")
 
 if 'history_data' not in st.session_state: st.session_state['history_data'] = []
 
-# --- 4. VIDEO PROCESSOR ---
+# --- 5. VIDEO PROCESSOR ---
 class VideoProcessor:
     def __init__(self):
         self.mirror = False 
@@ -179,7 +216,6 @@ class VideoProcessor:
 
             cv2.rectangle(img, (0, 0), (280, 60), (255, 255, 255), -1)
             cv2.putText(img, f"{label} ({prob*100:.0f}%)", (10, 40), cv2.FONT_HERSHEY_DUPLEX, 0.8, color, 2)
-            
             h, w, _ = img.shape
             cv2.rectangle(img, (w//2-80, h//2-80), (w//2+80, h//2+80), color, 3)
 
@@ -197,20 +233,25 @@ def prediksi_gambar_diam(image):
 
 # ================= MAIN UI =================
 
-# SIDEBAR (TETAP ADA)
+# --- SIDEBAR (SEKARANG AKAN MUNCUL OTOMATIS) ---
 with st.sidebar:
     if lottie_sidebar: st_lottie(lottie_sidebar, height=150, key="anim")
     st.markdown("## EcoSort Edu 🌿")
     st.markdown("*'Satu langkah kecil memilah, lompatan besar untuk bumi.'*")
     st.divider()
-    st.info("💡 **Tips:** Pisahkan minyak jelantah, jangan buang di wastafel!")
+    
+    # TIPS LINGKUNGAN DI PINDAH KE SINI
+    st.markdown("### 💡 Tips Lingkungan:")
+    st.info("Tahukah kamu? Satu liter minyak jelantah bisa mencemari 1000 liter air tanah! Jangan buang di wastafel ya.")
+    
+    st.divider()
     st.caption("© 2025 Project UAS")
 
 if model is None:
     st.error("⚠️ Model belum ditemukan di GitHub.")
     st.stop()
 
-# --- HEADER CUSTOM HTML (JUDUL MENYATU DENGAN BACKGROUND) ---
+# HEADER (Tanpa Kotak Putih)
 st.markdown("""
 <div class="custom-header">
     <img src="https://cdn-icons-png.flaticon.com/512/2947/2947656.png" width="90">
@@ -223,7 +264,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# TABS NAVIGATION
+# TABS
 tab1, tab2, tab3, tab4 = st.tabs(["📸 AI SCANNER", "📊 STATISTIK", "🎓 KUIS BERLEVEL", "ℹ️ INFO PROJECT"])
 
 # === TAB 1: SCANNER ===
@@ -296,15 +337,6 @@ with tab1:
                 st.info("👈 Masukkan gambar di sebelah kiri untuk melihat hasil.")
         else:
             st.info("Lihat hasil deteksi langsung pada layar video 👈")
-            
-    # INFO TAMBAHAN DI BAWAH SCANNER (UNTUK HP)
-    st.write("---")
-    st.markdown("""
-    <div style="background-color: #E0F7FA; padding: 15px; border-radius: 10px; border-left: 5px solid #00ACC1;">
-        <h4>💡 Tips Lingkungan:</h4>
-        <p style="margin:0;">Tahukah kamu? Satu liter minyak jelantah bisa mencemari 1000 liter air tanah! Jangan buang di wastafel ya.</p>
-    </div>
-    """, unsafe_allow_html=True)
 
 # === TAB 2: DASHBOARD ===
 with tab2:
@@ -326,17 +358,18 @@ with tab2:
     else:
         st.warning("Belum ada data tersimpan. Yuk scan sampah dulu!")
 
-# === TAB 3: KUIS PER LEVEL ===
+# === TAB 3: KUIS PER LEVEL (ANIMASI ALAM DARI BAWAH) ===
 with tab3:
-    st.subheader("🎓 Tantangan Pemilahan Sampah")
-    st.write("Pilih level kesulitanmu dan buktikan kamu peduli lingkungan!")
+    col_hdr, col_anim = st.columns([3,1])
+    with col_hdr:
+        st.subheader("🎓 Tantangan Pemilahan Sampah")
+        st.write("Pilih level kesulitanmu dan buktikan kamu peduli lingkungan!")
+    with col_anim:
+        if lottie_quiz: st_lottie(lottie_quiz, height=120)
     
     st.divider()
 
-    # Pilih Level
     pilihan_level = st.selectbox("Pilih Tingkat Kesulitan:", list(kuis_data.keys()))
-    
-    # Ambil soal berdasarkan level
     soal_aktif = kuis_data[pilihan_level]
     
     score = 0
@@ -352,12 +385,13 @@ with tab3:
                 st.success(f"✅ {q['msg']}")
                 score += point_per_soal
             else:
-                st.error("❌ Masih kurang tepat, coba lagi ya.")
+                st.error("❌ Masih kurang tepat.")
         st.write("---")
         
     if st.button("Lihat Nilai Saya"):
         if score == 100:
-            if lottie_flower: st_lottie(lottie_flower, height=250, key="flower")
+            # MEMANGGIL MAGIC ANIMATION (Bunga Naik dari Bawah)
+            animation_nature_rise()
             st.markdown(f"### 🎉 SEMPURNA! Nilai: 100")
             st.success("Hebat! Kamu sudah siap jadi Duta Lingkungan.")
         elif score >= 60:
@@ -376,11 +410,11 @@ with tab4:
             st.image("grafik_performa.png", caption="Grafik Akurasi Model AI", use_container_width=True)
     with c2:
         st.write("""
-        **EcoSort Edu** adalah aplikasi berbasis Artificial Intelligence untuk membantu
+        **EcoSort Edu** adalah aplikasi berbasis teknologi untuk membantu
         edukasi pemilahan sampah di masyarakat.
         
         **Fitur Unggulan:**
-        - ✨ Deteksi Real-time dengan CNN
+        - ✨ Deteksi Real-time
         - 📱 Support Kamera HP & Laptop
         - 🎓 Modul Kuis Berjenjang (Leveling)
         """)
