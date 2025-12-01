@@ -68,7 +68,7 @@ st.markdown("""
         background-attachment: fixed;
     }
     
-    /* MENYESUAIKAN WARNA HEADER BIAR MENYATU DENGAN BACKGROUND */
+    /* MENGATUR HEADER AGAR TRANSPARAN */
     [data-testid="stHeader"] {
         background-color: transparent;
     }
@@ -233,7 +233,7 @@ def prediksi_gambar_diam(image):
 
 # ================= MAIN UI =================
 
-# --- SIDEBAR (TIPS LINGKUNGAN ADA DISINI) ---
+# --- SIDEBAR ---
 with st.sidebar:
     if lottie_sidebar: st_lottie(lottie_sidebar, height=150, key="anim")
     st.markdown("## EcoSort Edu 🌿")
@@ -334,8 +334,6 @@ with tab1:
                 st.info("👈 Masukkan gambar di sebelah kiri untuk melihat hasil.")
         else:
             st.info("Lihat hasil deteksi langsung pada layar video 👈")
-            
-    # HAPUS: Tips lingkungan di bawah sudah dihapus sesuai permintaan.
 
 # === TAB 2: DASHBOARD ===
 with tab2:
@@ -390,7 +388,7 @@ with tab3:
         
     if st.button("Lihat Nilai Saya"):
         if score == 100:
-            # ANIMASI ALAM / BUNGA (DARI BAWAH)
+            # ANIMASI BUNGA NAIK DARI BAWAH
             animation_nature_rise()
             st.markdown(f"### 🎉 SEMPURNA! Nilai: 100")
             st.success("Hebat! Kamu sudah siap jadi Duta Lingkungan.")
@@ -404,4 +402,18 @@ with tab3:
 # === TAB 4: INFO PROJECT ===
 with tab4:
     st.header("Tentang Aplikasi")
-    c1, c2
+    c1, c2 = st.columns(2)
+    with c1:
+        if os.path.exists("grafik_performa.png"):
+            st.image("grafik_performa.png", caption="Grafik Akurasi Model AI", use_container_width=True)
+    with c2:
+        st.write("""
+        **EcoSort Edu** adalah aplikasi berbasis teknologi untuk membantu
+        edukasi pemilahan sampah di masyarakat.
+        
+        **Fitur Unggulan:**
+        - ✨ Deteksi Real-time
+        - 📱 Support Kamera HP & Laptop
+        - 🎓 Modul Kuis Berjenjang (Leveling)
+        """)
+        st.caption("Dibuat dengan ❤️ menggunakan Python & Streamlit")
